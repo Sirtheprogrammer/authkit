@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuthKit — Open Source Stateless Authentication & User Management Kit</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-badge">AK</div>
+        <a href="/" class="logo-text">AuthKit</a>
+      </div>
+      <nav class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#playground" class="nav-link">Playground</a>
+        <a href="/docs.html" class="nav-link">Documentation</a>
+        <a href="/admin.html" class="nav-link">Admin Console</a>
+        <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="nav-btn">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="badge-pill">
+      <div class="badge-dot" id="health-dot"></div>
+      <span id="health-text">AuthKit Operational</span>
+      <span style="color: var(--border-muted)">|</span>
+      <span>v1.0.0 Open Source</span>
+    </div>
+
+    <h1 class="hero-title">
+      The Stateless Authentication Kit<br>For Any Modern Stack
+    </h1>
+
+    <p class="hero-subtitle">
+      A complete, production-ready user management and authentication service. Stateless JWT with JWKS, multi-database support (PostgreSQL, MySQL, SQLite, MongoDB), dynamic custom schemas, Google, Firebase & GitHub OAuth, SMTP & Resend email, and native AI Model Context Protocol (MCP) server.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="/docs.html" class="btn-primary">
+        <span>Get Started & Quickstart</span>
+        <span>→</span>
+      </a>
+      <a href="#playground" class="btn-secondary">
+        <span>Interactive Playground</span>
+      </a>
+      <a href="/admin.html" class="btn-secondary">
+        <span>Admin Console</span>
+      </a>
+    </div>
+
+    <!-- One-command installation box -->
+    <div class="cmd-box">
+      <div class="cmd-text">
+        <span class="cmd-prompt">$</span>curl -fsSL https://raw.githubusercontent.com/sirtheprogrammer/authkit/main/scripts/install.sh | bash
+      </div>
+      <button class="copy-btn" data-copy="curl -fsSL https://raw.githubusercontent.com/sirtheprogrammer/authkit/main/scripts/install.sh | bash">Copy</button>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="features-section" id="features">
+    <div class="section-header">
+      <div class="section-tag">Architecture & Capabilities</div>
+      <h2 class="section-title">Built for Portability, Speed & Simplicity</h2>
+    </div>
+
+    <div class="grid-3">
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>100% Stateless & JWKS Ready</h3>
+        <p>
+          Microservices and frontend apps verify tokens instantly with standard RFC 7517 public keys (<code>/.well-known/jwks.json</code>). Zero database queries required on downstream API requests.
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Multi-Database Freedom</h3>
+        <p>
+          Switch between SQLite (zero-config local default), PostgreSQL, MySQL, and MongoDB with a single environment variable. Auto-migrations run on boot.
+        </p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <h3>Dynamic Custom Schema</h3>
+        <p>
+          Store and validate arbitrary custom fields (phone, company, roles, address, tier) with strict or flexible schema validation. Zero manual SQL migrations needed.
+        </p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="feature-card">
+        <div class="feature-icon">🔑</div>
+        <h3>Google, Firebase & GitHub OAuth</h3>
+        <p>
+          One-click Google Cloud OAuth, GitHub OAuth, and direct Firebase ID token verification. Seamlessly links external identities to AuthKit user profiles.
+        </p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="feature-card">
+        <div class="feature-icon">✉️</div>
+        <h3>Bring-Your-Own Email & Resend</h3>
+        <p>
+          Configure custom SMTP credentials or use the Resend SDK. Comes out-of-the-box with beautiful monochromatic responsive HTML email templates for OTP verification and password reset.
+        </p>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Model Context Protocol (MCP) AI</h3>
+        <p>
+          Equipped with an MCP server (JSON-RPC 2.0 over Stdio and HTTP). Empower Claude Desktop, Cursor, and autonomous AI agents to manage users, tokens, and auth logs.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive API Playground -->
+  <section class="playground-section" id="playground">
+    <div class="section-header">
+      <div class="section-tag">Interactive Sandbox</div>
+      <h2 class="section-title">Test the Live API in Real-Time</h2>
+    </div>
+
+    <div class="playground-container" id="api-playground">
+      <div class="playground-header">
+        <div class="tab-group">
+          <button class="tab-btn playground-tab active" data-target="form-signup">1. Signup</button>
+          <button class="tab-btn playground-tab" data-target="form-login">2. Login</button>
+          <button class="tab-btn playground-tab" data-target="form-me">3. Get Me (/me)</button>
+          <button class="tab-btn playground-tab" data-target="form-inspect">4. Inspect JWT Token</button>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
+          Status: <span id="response-status" style="color: var(--text-white); font-weight: 600;">Ready</span>
+        </div>
+      </div>
+
+      <div class="playground-body">
+        <!-- Left Panel: Request Form -->
+        <div class="playground-panel">
+          <!-- Signup Form -->
+          <form id="form-signup" class="playground-form" style="display: block;">
+            <div class="panel-title">POST /api/v1/auth/signup</div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" id="signup-email" value="alex@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password (min 8 chars)</label>
+              <input type="password" class="form-input" id="signup-password" value="SuperSecure123!" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Custom Schema Metadata (JSON)</label>
+              <textarea class="form-textarea" id="signup-metadata">{"name": "Alex Mercer", "company": "Acme Inc", "role_title": "Lead Architect"}</textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: auto;">
+              Create Account & Issue Stateless JWT
+            </button>
+          </form>
+
+          <!-- Login Form -->
+          <form id="form-login" class="playground-form" style="display: none;">
+            <div class="panel-title">POST /api/v1/auth/login</div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" id="login-email" value="alex@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-input" id="login-password" value="SuperSecure123!" required>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: auto;">
+              Sign In & Obtain Tokens
+            </button>
+          </form>
+
+          <!-- Get Me Form -->
+          <form id="form-me" class="playground-form" style="display: none;">
+            <div class="panel-title">GET /api/v1/auth/me</div>
+            <div class="form-group">
+              <label class="form-label">Stateless Bearer Access Token</label>
+              <input type="text" class="form-input" id="me-token" placeholder="Paste access_token from signup or login">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: auto;">
+              Fetch Authenticated Profile
+            </button>
+          </form>
+
+          <!-- Inspect Token Form -->
+          <form id="form-inspect" class="playground-form" style="display: none;">
+            <div class="panel-title">Stateless JWT Decoder</div>
+            <div class="form-group">
+              <label class="form-label">Access Token String</label>
+              <textarea class="form-textarea" id="inspect-token" placeholder="Paste access_token here..." style="min-height: 140px;"></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: auto;">
+              Inspect Claims & Expiry
+            </button>
+          </form>
+        </div>
+
+        <!-- Right Panel: Live Response -->
+        <div class="playground-panel" style="background: #09090b;">
+          <div class="panel-title">Live Response JSON</div>
+          <pre class="response-box" id="playground-response">// Response payload will appear here upon submission...
+// Run Signup or Login to see real AuthKit stateless tokens and user attributes.</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Client Integration Code Snippets -->
+  <section class="features-section" style="padding-top: 0;">
+    <div class="section-header">
+      <div class="section-tag">Integration</div>
+      <h2 class="section-title">Verify Tokens in Any Language</h2>
+      <p style="color: var(--text-secondary); max-width: 600px; margin: 12px auto 0; font-size: 14px;">
+        Because AuthKit emits standard RFC 7517 JWKS tokens, downstream services can verify signatures locally in microseconds with zero network or database latency.
+      </p>
+    </div>
+
+    <div class="snippet-container">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="tab-group">
+            <button class="tab-btn snippet-tab active" data-lang="curl">cURL</button>
+            <button class="tab-btn snippet-tab" data-lang="ts">TypeScript / Next.js</button>
+            <button class="tab-btn snippet-tab" data-lang="python">Python (FastAPI)</button>
+            <button class="tab-btn snippet-tab" data-lang="go">Go</button>
+          </div>
+          <button class="copy-btn">Copy</button>
+        </div>
+
+        <!-- cURL -->
+        <pre class="code-body snippet-block" data-lang="curl"><code># 1. Signup with dynamic metadata
+curl -X POST http://localhost:8080/api/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "Password123!",
+    "metadata": { "name": "Jane Doe", "tier": "pro" }
+  }'
+
+# 2. Get Public Key Set (JWKS) for stateless token verification
+curl http://localhost:8080/.well-known/jwks.json</code></pre>
+
+        <!-- TypeScript -->
+        <pre class="code-body snippet-block" data-lang="ts" style="display: none;"><code>import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+// Downstream Next.js / Express middleware verifies tokens statelessly!
+const JWKS = createRemoteJWKSet(new URL('http://localhost:8080/.well-known/jwks.json'));
+
+export async function verifyAuthKitToken(token: string) {
+  const { payload } = await jwtVerify(token, JWKS, {
+    issuer: 'authkit',
+  });
+
+  return {
+    userId: payload.sub,
+    email: payload.email,
+    role: payload.role,
+    metadata: payload.metadata, // Custom schema attributes
+  };
+}</code></pre>
+
+        <!-- Python -->
+        <pre class="code-body snippet-block" data-lang="python" style="display: none;"><code>import jwt
+from jwt import PyJWKClient
+
+# Python FastAPI stateless verification
+jwks_client = PyJWKClient("http://localhost:8080/.well-known/jwks.json")
+
+def verify_token(token: str):
+    signing_key = jwks_client.get_signing_key_from_jwt(token)
+    data = jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience="authkit-api",
+        issuer="authkit"
+    )
+    return data  # Contains sub, email, role, and custom metadata</code></pre>
+
+        <!-- Go -->
+        <pre class="code-body snippet-block" data-lang="go" style="display: none;"><code>package main
+
+import (
+    "fmt"
+    "net/http"
+    "authkit/internal/jwt"
+)
+
+// Standalone Go client verification using public key or AuthKit SDK
+func main() {
+    resp, err := http.Get("http://localhost:8080/.well-known/jwks.json")
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+    fmt.Println("Stateless JWKS endpoint fetched successfully")
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <strong>AuthKit</strong> &copy; 2026. Released under the MIT Open Source License.
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <a href="/docs.html">Docs</a>
+        <a href="/admin.html">Admin</a>
+        <a href="/.well-known/jwks.json">JWKS</a>
+        <a href="/health">Health</a>
+        <a href="https://github.com/sirtheprogrammer/authkit">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

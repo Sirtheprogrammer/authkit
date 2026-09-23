@@ -1,0 +1,85 @@
+# AuthKit Configuration Reference
+# Place this file as 'authkit.yaml' in your working directory or pass with --config <path>
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+  base_url: "http://localhost:8080"
+  environment: "development" # "development" or "production"
+  allowed_origins:
+    - "*"
+
+database:
+  # Supported types: "sqlite", "postgres", "mysql", "mongodb"
+  type: "sqlite"
+  filepath: "./authkit.db" # used when type is sqlite
+  # url: "postgres://user:password@localhost:5432/authkit?sslmode=disable"
+  # url: "root:password@tcp(localhost:3306)/authkit?parseTime=true"
+  # url: "mongodb://localhost:27017/authkit"
+
+jwt:
+  algorithm: "RS256" # "RS256" (asymmetric with JWKS) or "HS256" (symmetric secret)
+  issuer: "authkit"
+  key_id: "authkit-key-1"
+  access_expiry: 15m
+  refresh_expiry: 168h # 7 days
+  require_email_verification: false
+  # hmac_secret: "replace-with-a-secure-32-byte-secret-if-using-hs256"
+  # private_key_pem: "" # optional custom RSA PEM key
+  # public_key_pem: ""
+
+schema:
+  strict: false # if true, rejects any field not explicitly defined below
+  fields:
+    - name: name
+      type: string
+      required: false
+      max_length: 100
+      description: "User full display name"
+    - name: company
+      type: string
+      required: false
+      description: "Company or organization"
+    - name: phone
+      type: string
+      pattern: '^\+?[1-9]\d{1,14}$'
+      required: false
+      description: "E.164 phone number"
+    - name: tier
+      type: string
+      allowed_values: ["free", "pro", "enterprise"]
+      default: "free"
+      description: "Subscription tier"
+
+oauth:
+  google:
+    enabled: false
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/auth/oauth/google/callback"
+  firebase:
+    enabled: false
+    project_id: ""
+  github:
+    enabled: false
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/auth/oauth/github/callback"
+
+email:
+  # Supported providers: "mock" (prints to console), "smtp", "resend"
+  provider: "mock"
+  from_email: "noreply@authkit.local"
+  from_name: "AuthKit"
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    username: ""
+    password: ""
+    secure: false
+  resend:
+    api_key: ""
+
+mcp:
+  enabled: true
+  auth_token: "" # optional bearer token to restrict access to MCP tools

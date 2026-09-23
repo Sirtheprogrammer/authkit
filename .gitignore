@@ -1,0 +1,28 @@
+# Binaries
+/authkit
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and local databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+test_*.db
+
+# Environment and local configs
+.env
+.env.local
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

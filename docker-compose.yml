@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Standalone AuthKit with Embedded SQLite (Zero Config)
+  authkit:
+    build: .
+    image: authkit/authkit:latest
+    container_name: authkit-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - BASE_URL=http://localhost:8080
+      - DB_TYPE=sqlite
+      - DB_FILE=/data/authkit.db
+      - JWT_ALGORITHM=RS256
+      - EMAIL_PROVIDER=mock
+      - MCP_ENABLED=true
+    volumes:
+      - authkit_data:/data
+
+  # Optional PostgreSQL instance (run with: docker compose --profile postgres up)
+  postgres:
+    image: postgres:16-alpine
+    container_name: authkit-postgres
+    restart: unless-stopped
+    profiles: ["postgres"]
+    environment:
+      - POSTGRES_USER=authkit
+      - POSTGRES_PASSWORD=authkit_secret
+      - POSTGRES_DB=authkit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Optional MongoDB instance (run with: docker compose --profile mongo up)
+  mongodb:
+    image: mongo:7-jammy
+    container_name: authkit-mongodb
+    restart: unless-stopped
+    profiles: ["mongo"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  authkit_data:
+  postgres_data:
+  mongo_data:

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Console — AuthKit</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-badge">AK</div>
+        <a href="/" class="logo-text">AuthKit</a>
+        <span style="font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);">/ admin</span>
+      </div>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/docs.html" class="nav-link">Documentation</a>
+        <a href="/admin.html" class="nav-link active">Admin Console</a>
+        <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="nav-btn">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <div style="max-width: 1200px; margin: 40px auto; padding: 0 24px; flex: 1; width: 100%;">
+    <!-- Top Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h1 style="font-size: 28px; font-weight: 700; color: #ffffff;">User Management</h1>
+        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Inspect active users, manage roles, and review dynamic schema attributes.</p>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button id="btn-refresh-users" class="btn-secondary">Refresh</button>
+        <button id="btn-open-create-modal" class="btn-primary">+ Provision User</button>
+      </div>
+    </div>
+
+    <!-- Admin JWT Token Input -->
+    <div class="cmd-box" style="max-width: 100%; margin-bottom: 24px; background: var(--bg-card);">
+      <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+        <span style="font-size: 13px; color: var(--text-secondary); white-space: nowrap;">Admin JWT:</span>
+        <input type="text" id="admin-jwt-token" class="form-input" placeholder="Bearer access token with admin or superadmin role" style="margin: 0;">
+        <button id="btn-apply-token" class="btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Apply</button>
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
+      <div class="feature-card" style="padding: 20px;">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Users</div>
+        <div id="stat-total-users" style="font-size: 32px; font-weight: 800; color: #ffffff; margin-top: 8px;">--</div>
+      </div>
+      <div class="feature-card" style="padding: 20px;">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Storage Engine</div>
+        <div id="stat-storage-engine" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">SQLITE</div>
+      </div>
+      <div class="feature-card" style="padding: 20px;">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Token Algorithm</div>
+        <div id="stat-jwt-algo" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">RS256 (JWKS)</div>
+      </div>
+    </div>
+
+    <!-- User Table Card -->
+    <div class="playground-container">
+      <div class="playground-header">
+        <input type="text" id="admin-search-input" class="form-input" placeholder="Search by email or custom field..." style="max-width: 340px; margin: 0;">
+        <div style="font-size: 13px; color: var(--text-secondary);">
+          Showing: <span id="user-count-display">0</span> users
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Verified</th>
+              <th>Dynamic Metadata</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="user-table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 48px 0;">
+                Provide an Admin JWT token above and click Apply to load user records.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div id="create-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); max-width: 480px; width: 90%; padding: 32px;">
+      <h3 style="font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Provision New User</h3>
+      <form id="admin-create-form">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="modal-email" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="modal-password" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="modal-role" class="form-input" style="background: #000000;">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="superadmin">SuperAdmin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Custom Metadata (JSON)</label>
+          <textarea id="modal-meta" class="form-textarea">{"name": "Admin User"}</textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" id="btn-close-modal" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem('authkit_admin_token') || '';
+    if (adminToken) {
+      document.getElementById('admin-jwt-token').value = adminToken;
+    }
+
+    document.getElementById('btn-apply-token').addEventListener('click', () => {
+      adminToken = document.getElementById('admin-jwt-token').value.trim();
+      localStorage.setItem('authkit_admin_token', adminToken);
+      fetchUsers();
+    });
+
+    document.getElementById('btn-refresh-users').addEventListener('click', fetchUsers);
+
+    async function fetchUsers() {
+      const search = document.getElementById('admin-search-input').value;
+      const tbody = document.getElementById('user-table-body');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px 0;">Loading...</td></tr>';
+
+      try {
+        const headers = {};
+        if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+        const res = await fetch(`/api/v1/users?query=${encodeURIComponent(search)}`, { headers });
+        const data = await res.json();
+
+        if (!res.ok) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 32px 0;">${data.error || 'Failed to fetch users. Ensure you have provided an Admin JWT token.'}</td></tr>`;
+          return;
+        }
+
+        const users = data.users || [];
+        document.getElementById('user-count-display').innerText = data.total || users.length;
+        document.getElementById('stat-total-users').innerText = data.total || users.length;
+
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px 0;">No users found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td><strong>${u.email}</strong></td>
+            <td><span class="status-badge" style="background: rgba(255,255,255,0.1); color: #fff;">${u.role}</span></td>
+            <td><span class="status-badge ${u.status === 'active' ? 'status-active' : 'status-suspended'}">${u.status}</span></td>
+            <td>${u.email_verified ? '✓' : '—'}</td>
+            <td><code style="font-size: 11px; color: #a1a1aa;">${JSON.stringify(u.metadata || {})}</code></td>
+            <td style="color: var(--text-muted); font-size: 12px;">${new Date(u.created_at).toLocaleDateString()}</td>
+            <td>
+              <button onclick="toggleBan('${u.id}', '${u.status}')" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">
+                ${u.status === 'active' ? 'Suspend' : 'Activate'}
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 32px 0;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function toggleBan(id, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+
+      await fetch(`/api/v1/users/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ status: newStatus }),
+      });
+      fetchUsers();
+    }
+
+    // Modal controls
+    const modal = document.getElementById('create-modal');
+    document.getElementById('btn-open-create-modal').addEventListener('click', () => modal.style.display = 'flex');
+    document.getElementById('btn-close-modal').addEventListener('click', () => modal.style.display = 'none');
+
+    document.getElementById('admin-create-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('modal-email').value;
+      const password = document.getElementById('modal-password').value;
+      const role = document.getElementById('modal-role').value;
+      let metadata = {};
+      try {
+        metadata = JSON.parse(document.getElementById('modal-meta').value);
+      } catch (_) {}
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+
+      const res = await fetch('/api/v1/users', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ email, password, role, email_verified: true, metadata }),
+      });
+
+      if (res.ok) {
+        modal.style.display = 'none';
+        fetchUsers();
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to create user');
+      }
+    });
+
+    if (adminToken) fetchUsers();
+  </script>
+</body>
+</html>

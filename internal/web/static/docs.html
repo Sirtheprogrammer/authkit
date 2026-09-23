@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — AuthKit</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-badge">AK</div>
+        <a href="/" class="logo-text">AuthKit</a>
+        <span style="font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);">/ docs</span>
+      </div>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/docs.html" class="nav-link active">Documentation</a>
+        <a href="/admin.html" class="nav-link">Admin Console</a>
+        <a href="/.well-known/jwks.json" target="_blank" class="nav-link">JWKS Endpoint</a>
+        <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="nav-btn">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Docs Container -->
+  <div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <div class="docs-nav-section">
+        <div class="docs-nav-title">Getting Started</div>
+        <a href="#overview" class="docs-nav-item active">Overview & Philosophy</a>
+        <a href="#quickstart" class="docs-nav-item">Quickstart Guide</a>
+        <a href="#stateless" class="docs-nav-item">Stateless Architecture</a>
+      </div>
+
+      <div class="docs-nav-section">
+        <div class="docs-nav-title">Databases & Schema</div>
+        <a href="#databases" class="docs-nav-item">Multi-DB Configuration</a>
+        <a href="#custom-schema" class="docs-nav-item">Dynamic Custom Schema</a>
+      </div>
+
+      <div class="docs-nav-section">
+        <div class="docs-nav-title">Integrations</div>
+        <a href="#oauth" class="docs-nav-item">Google & GitHub OAuth</a>
+        <a href="#firebase" class="docs-nav-item">Firebase Project Auth</a>
+        <a href="#email" class="docs-nav-item">SMTP & Resend SDK</a>
+        <a href="#mcp" class="docs-nav-item">Model Context Protocol (MCP)</a>
+      </div>
+
+      <div class="docs-nav-section">
+        <div class="docs-nav-title">Reference</div>
+        <a href="#api-reference" class="docs-nav-item">REST API Reference</a>
+        <a href="#cli-commands" class="docs-nav-item">CLI Commands</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-content">
+      <!-- Overview -->
+      <section id="overview">
+        <h1>AuthKit Documentation</h1>
+        <p>
+          AuthKit is an open-source, stateless authentication and user management service designed to be embedded, self-hosted, and reused across any stack with zero friction.
+        </p>
+
+        <h2>Core Principles</h2>
+        <ul>
+          <li><strong>100% Stateless Verification:</strong> Signs standard RS256/HS256 JWT tokens and exposes an RFC 7517 JWKS endpoint. Downstream APIs verify signatures without querying the database.</li>
+          <li><strong>Multi-Database Agnostic:</strong> Plug in SQLite, PostgreSQL, MySQL, or MongoDB. Auto-migrations run on boot.</li>
+          <li><strong>Custom Dynamic Schema:</strong> Store and validate whatever custom attributes your application demands without manual DDL migrations.</li>
+          <li><strong>Universal OAuth:</strong> Built-in Google Cloud OAuth2, GitHub OAuth, and direct Firebase ID token validation.</li>
+          <li><strong>Zero-Dependency Binary:</strong> Built as a single Go binary embedding its own documentation, landing page, and admin interface.</li>
+          <li><strong>AI First:</strong> Built-in Model Context Protocol (MCP) server for Claude Desktop, Cursor, and agentic workflows.</li>
+        </ul>
+      </section>
+
+      <!-- Quickstart -->
+      <section id="quickstart">
+        <h2>Quickstart Guide</h2>
+        <p>Deploy AuthKit locally or on your server in under 60 seconds.</p>
+
+        <h3>Option 1: One-Line Install Script</h3>
+        <div class="code-block">
+          <div class="code-header"><span>Bash</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>curl -fsSL https://raw.githubusercontent.com/sirtheprogrammer/authkit/main/scripts/install.sh | bash</code></pre>
+        </div>
+
+        <h3>Option 2: Docker / Docker Compose</h3>
+        <div class="code-block">
+          <div class="code-header"><span>docker-compose.yml</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>version: '3.8'
+services:
+  authkit:
+    image: authkit/authkit:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_TYPE=sqlite
+      - DB_FILE=/data/authkit.db
+      - BASE_URL=http://localhost:8080
+      - JWT_ALGORITHM=RS256
+    volumes:
+      - authkit_data:/data
+
+volumes:
+  authkit_data:</code></pre>
+        </div>
+
+        <h3>Option 3: Run Binary Directly</h3>
+        <div class="code-block">
+          <div class="code-header"><span>Terminal</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code># Run interactive configuration wizard
+./authkit init
+
+# Start server
+./authkit serve</code></pre>
+        </div>
+      </section>
+
+      <!-- Stateless Architecture -->
+      <section id="stateless">
+        <h2>Stateless JWT & JWKS Verification</h2>
+        <p>
+          Unlike legacy session managers that require database lookups on every single incoming HTTP request, AuthKit uses asymmetric cryptographic signatures:
+        </p>
+        <ol>
+          <li>User logs in via <code>POST /api/v1/auth/login</code>.</li>
+          <li>AuthKit signs a JWT access token with an RSA private key. The token payload contains <code>sub</code> (User ID), <code>email</code>, <code>role</code>, and <code>metadata</code>.</li>
+          <li>Your downstream services fetch the public keys once from <code>GET /.well-known/jwks.json</code> and cache them.</li>
+          <li>Every downstream microservice verifies tokens locally with zero network hops.</li>
+        </ol>
+
+        <div class="code-block">
+          <div class="code-header"><span>OIDC Discovery Document</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>GET /.well-known/openid-configuration
+
+{
+  "issuer": "authkit",
+  "jwks_uri": "http://localhost:8080/.well-known/jwks.json",
+  "response_types_supported": ["token", "id_token"],
+  "claims_supported": ["sub", "email", "role", "metadata", "iss", "exp"]
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- Databases -->
+      <section id="databases">
+        <h2>Multi-Database Configuration</h2>
+        <p>AuthKit supports four enterprise databases out of the box:</p>
+
+        <h3>1. SQLite (Default / Zero-Config)</h3>
+        <p>Embedded, pure Go driver. No C compiler or external server needed.</p>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>DB_TYPE=sqlite
+DB_FILE=./authkit.db</code></pre>
+        </div>
+
+        <h3>2. PostgreSQL</h3>
+        <p>Uses connection pooling and native JSONB columns for dynamic custom schema attributes.</p>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>DB_TYPE=postgres
+DATABASE_URL=postgres://user:password@localhost:5432/authkit?sslmode=disable</code></pre>
+        </div>
+
+        <h3>3. MySQL</h3>
+        <p>Uses InnoDB engine with native JSON columns and UTF-8 multibyte encoding.</p>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>DB_TYPE=mysql
+DATABASE_URL=root:password@tcp(localhost:3306)/authkit?parseTime=true</code></pre>
+        </div>
+
+        <h3>4. MongoDB</h3>
+        <p>Native BSON storage with dynamic document mapping and automatic index provisioning.</p>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>DB_TYPE=mongodb
+DATABASE_URL=mongodb://localhost:27017/authkit</code></pre>
+        </div>
+      </section>
+
+      <!-- Custom Schema -->
+      <section id="custom-schema">
+        <h2>Dynamic Custom Schema</h2>
+        <p>
+          Configure custom attributes in <code>authkit.yaml</code>. AuthKit validates types, lengths, regular expressions, and allowed values automatically on signup and updates.
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span>authkit.yaml</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>schema:
+  strict: false # if true, disallows undeclared keys
+  fields:
+    - name: phone
+      type: string
+      pattern: '^\+?[1-9]\d{1,14}$'
+      required: false
+    - name: company
+      type: string
+      max_length: 100
+      required: true
+    - name: tier
+      type: string
+      allowed_values: ["free", "pro", "enterprise"]
+      default: "free"
+    - name: age
+      type: number
+      min: 18</code></pre>
+        </div>
+      </section>
+
+      <!-- OAuth -->
+      <section id="oauth">
+        <h2>OAuth: Google & GitHub</h2>
+        <p>To enable OAuth providers, supply client credentials in environment variables or <code>authkit.yaml</code>:</p>
+
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code># Google Cloud Console
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URL=http://localhost:8080/api/v1/auth/oauth/google/callback
+
+# GitHub Developer Settings
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_REDIRECT_URL=http://localhost:8080/api/v1/auth/oauth/github/callback</code></pre>
+        </div>
+      </section>
+
+      <!-- Firebase -->
+      <section id="firebase">
+        <h2>Firebase Project Integration</h2>
+        <p>
+          Allow clients using the Firebase SDK (Web, iOS, Android, Flutter) to authenticate directly into AuthKit:
+        </p>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>FIREBASE_PROJECT_ID=my-firebase-project-id</code></pre>
+        </div>
+
+        <p>Client application workflow:</p>
+        <div class="code-block">
+          <div class="code-header"><span>Client JavaScript</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>import { getAuth } from 'firebase/auth';
+
+const auth = getAuth();
+const idToken = await auth.currentUser.getIdToken();
+
+// Exchange Firebase token for AuthKit session
+const res = await fetch('http://localhost:8080/api/v1/auth/firebase/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ id_token: idToken }),
+});
+const authKitSession = await res.json();</code></pre>
+        </div>
+      </section>
+
+      <!-- Email -->
+      <section id="email">
+        <h2>Email Delivery (SMTP & Resend SDK)</h2>
+        <p>AuthKit provides built-in email verification and password reset workflows.</p>
+
+        <h3>Option A: SMTP</h3>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>EMAIL_PROVIDER=smtp
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=you@gmail.com
+SMTP_PASSWORD=app-specific-password
+EMAIL_FROM=noreply@yourdomain.com
+EMAIL_FROM_NAME="Your App"</code></pre>
+        </div>
+
+        <h3>Option B: Resend SDK</h3>
+        <div class="code-block">
+          <div class="code-header"><span>Environment</span></div>
+          <pre class="code-body"><code>EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_123456789abcdef
+EMAIL_FROM=auth@yourdomain.com
+EMAIL_FROM_NAME="AuthKit"</code></pre>
+        </div>
+      </section>
+
+      <!-- MCP -->
+      <section id="mcp">
+        <h2>Model Context Protocol (MCP) AI Server</h2>
+        <p>
+          AuthKit implements the Model Context Protocol (MCP) JSON-RPC 2.0 specification over Stdio and HTTP (<code>POST /mcp</code>). Connect Claude Desktop or Cursor directly:
+        </p>
+
+        <div class="code-block">
+          <div class="code-header"><span>claude_desktop_config.json</span><button class="copy-btn">Copy</button></div>
+          <pre class="code-body"><code>{
+  "mcpServers": {
+    "authkit": {
+      "command": "/usr/local/bin/authkit",
+      "args": ["mcp"]
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>Supported MCP Tools</h3>
+        <ul>
+          <li><code>authkit_list_users</code>: Search and query users with role and status filters.</li>
+          <li><code>authkit_get_user</code>: Retrieve user attributes and custom schema metadata.</li>
+          <li><code>authkit_create_user</code>: Provision users with custom fields.</li>
+          <li><code>authkit_update_user</code>: Modify roles, status, or metadata.</li>
+          <li><code>authkit_ban_user</code>: Suspend users and invalidate sessions instantly.</li>
+          <li><code>authkit_delete_user</code>: Remove user records.</li>
+          <li><code>authkit_inspect_token</code>: Statelessly verify and decode JWT tokens.</li>
+          <li><code>authkit_send_password_reset</code>: Trigger password reset emails.</li>
+          <li><code>authkit_get_system_stats</code>: Fetch database status and metrics.</li>
+        </ul>
+      </section>
+
+      <!-- API Reference -->
+      <section id="api-reference">
+        <h2>REST API Reference</h2>
+
+        <div class="code-block">
+          <div class="code-header"><span>Authentication Endpoints</span></div>
+          <pre class="code-body"><code>POST   /api/v1/auth/signup               # Register new user
+POST   /api/v1/auth/login                # Authenticate and obtain JWT
+POST   /api/v1/auth/refresh              # Rotate refresh token
+POST   /api/v1/auth/logout               # Revoke session
+GET    /api/v1/auth/me                   # Get profile (Requires Auth)
+PUT    /api/v1/auth/me                   # Update custom fields (Requires Auth)
+
+POST   /api/v1/auth/password/forgot      # Request password reset
+POST   /api/v1/auth/password/reset       # Set new password with token/OTP
+POST   /api/v1/auth/verify-email/confirm # Verify email with token/OTP
+POST   /api/v1/auth/verify-email/resend  # Resend verification email
+
+GET    /api/v1/auth/oauth/providers      # List enabled OAuth providers
+GET    /api/v1/auth/oauth/{provider}     # Initiate OAuth redirect
+GET    /api/v1/auth/oauth/{provider}/callback # Process callback
+POST   /api/v1/auth/firebase/verify      # Verify Firebase ID token</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span>Admin & System Endpoints</span></div>
+          <pre class="code-body"><code>GET    /api/v1/users                     # List users (Admin)
+POST   /api/v1/users                     # Create user (Admin)
+GET    /api/v1/users/{id}                # Get user by ID (Admin)
+PUT    /api/v1/users/{id}                # Update user (Admin)
+DELETE /api/v1/users/{id}                # Delete user (Admin)
+
+GET    /.well-known/jwks.json            # RFC 7517 Public Key Set
+GET    /.well-known/openid-configuration # RFC 8414 OIDC Discovery
+GET    /health                           # System health check
+POST   /mcp                              # Model Context Protocol JSON-RPC</code></pre>
+        </div>
+      </section>
+
+      <!-- CLI Commands -->
+      <section id="cli-commands">
+        <h2>CLI Reference</h2>
+        <div class="code-block">
+          <div class="code-header"><span>CLI Commands</span></div>
+          <pre class="code-body"><code>authkit serve             # Start HTTP server and embedded web console
+authkit init              # Interactive setup wizard to configure .env
+authkit migrate           # Run database migrations manually
+authkit admin create      # Create superadmin user account
+authkit mcp               # Start Model Context Protocol server over stdio
+authkit token generate    # Generate test stateless JWT token</code></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>AuthKit &copy; 2026. Released under the MIT License.</div>
+      <div style="display: flex; gap: 20px;">
+        <a href="/">Home</a>
+        <a href="/admin.html">Admin</a>
+        <a href="/.well-known/jwks.json">JWKS</a>
+        <a href="https://github.com/sirtheprogrammer/authkit">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
