@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"mime"
+	"net"
 	"net/smtp"
 	"strings"
 	"time"
@@ -74,6 +75,30 @@ func (s *SMTPEmailService) SendWelcomeEmail(ctx context.Context, toEmail, userNa
 	return s.sendMail(toEmail, subject, html, text)
 }
 
+func (s *SMTPEmailService) SendTestEmail(ctx context.Context, toEmail string) error {
+	subject := fmt.Sprintf("[%s] Test Email - Remote SMTP Operational", s.appName)
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; margin: 0;">
+  <div style="max-width: 560px; margin: 0 auto; background: #121215; border: 1px solid #27272a; border-radius: 8px; padding: 32px;">
+    <h2 style="margin-top: 0; color: #ffffff;">Remote SMTP Operational</h2>
+    <p style="color: #a1a1aa; line-height: 1.6;">Your remote SMTP configuration in AuthKit is verified and working properly.</p>
+    <div style="background: #18181b; border: 1px solid #27272a; border-radius: 6px; padding: 14px; margin: 20px 0; font-family: monospace; font-size: 13px; color: #e4e4e7;">
+      Host: %s<br/>
+      Port: %d<br/>
+      Sender: %s<br/>
+      Timestamp: %s
+    </div>
+    <p style="color: #71717a; font-size: 12px; margin-bottom: 0;">Sent by %s Admin Console.</p>
+  </div>
+</body>
+</html>`, s.cfg.SMTP.Host, s.cfg.SMTP.Port, s.cfg.FromEmail, time.Now().UTC().Format(time.RFC1123), s.appName)
+
+	text := fmt.Sprintf("Remote SMTP Operational\n\nYour remote SMTP configuration in AuthKit is verified and working properly.\nHost: %s:%d\nSender: %s\nTimestamp: %s\n", s.cfg.SMTP.Host, s.cfg.SMTP.Port, s.cfg.FromEmail, time.Now().UTC().Format(time.RFC1123))
+
+	return s.sendMail(toEmail, subject, html, text)
+}
+
 func (s *SMTPEmailService) sendMail(to, subject, htmlBody, textBody string) error {
 	smtpHost := s.cfg.SMTP.Host
 	smtpPort := s.cfg.SMTP.Port
@@ -122,14 +147,16 @@ func (s *SMTPEmailService) sendMail(to, subject, htmlBody, textBody string) erro
 		auth = smtp.PlainAuth("", s.cfg.SMTP.Username, s.cfg.SMTP.Password, smtpHost)
 	}
 
-	// SSL/TLS (port 465) or STARTTLS
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+
+	// SSL/TLS Direct connection (e.g. port 465)
 	if s.cfg.SMTP.Secure || smtpPort == 465 {
 		tlsConfig := &tls.Config{
 			ServerName: smtpHost,
 		}
-		conn, err := tls.Dial("tcp", addr, tlsConfig)
+		conn, err := tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
 		if err != nil {
-			return fmt.Errorf("failed to dial SMTP over TLS: %w", err)
+			return fmt.Errorf("failed to dial remote SMTP server over TLS (%s): %w", addr, err)
 		}
 		defer conn.Close()
 
@@ -141,28 +168,70 @@ func (s *SMTPEmailService) sendMail(to, subject, htmlBody, textBody string) erro
 
 		if auth != nil {
 			if err = client.Auth(auth); err != nil {
-				return fmt.Errorf("SMTP auth failed: %w", err)
+				return fmt.Errorf("remote SMTP authentication failed for user '%s': %w", s.cfg.SMTP.Username, err)
 			}
 		}
 
 		if err = client.Mail(fromEmail); err != nil {
-			return fmt.Errorf("SMTP MAIL command failed: %w", err)
+			return fmt.Errorf("SMTP MAIL FROM failed: %w", err)
 		}
 		if err = client.Rcpt(to); err != nil {
-			return fmt.Errorf("SMTP RCPT command failed: %w", err)
+			return fmt.Errorf("SMTP RCPT TO failed: %w", err)
 		}
 
 		w, err := client.Data()
 		if err != nil {
 			return fmt.Errorf("SMTP DATA command failed: %w", err)
 		}
-		_, err = w.Write([]byte(msg.String()))
-		if err != nil {
+		if _, err = w.Write([]byte(msg.String())); err != nil {
 			return fmt.Errorf("failed to write email body: %w", err)
 		}
 		return w.Close()
 	}
 
-	// Standard STARTTLS connection
-	return smtp.SendMail(addr, auth, fromEmail, []string{to}, []byte(msg.String()))
+	// Standard STARTTLS connection (e.g. port 587, 25, 2525)
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to remote SMTP server (%s): %w", addr, err)
+	}
+	defer conn.Close()
+
+	client, err := smtp.NewClient(conn, smtpHost)
+	if err != nil {
+		return fmt.Errorf("failed to initialize SMTP client: %w", err)
+	}
+	defer client.Close()
+
+	if hasStartTLS, _ := client.Extension("STARTTLS"); hasStartTLS {
+		tlsConfig := &tls.Config{
+			ServerName: smtpHost,
+		}
+		if err = client.StartTLS(tlsConfig); err != nil {
+			return fmt.Errorf("failed to negotiate STARTTLS with remote server %s: %w", smtpHost, err)
+		}
+	}
+
+	if auth != nil {
+		if hasAuth, _ := client.Extension("AUTH"); hasAuth {
+			if err = client.Auth(auth); err != nil {
+				return fmt.Errorf("remote SMTP authentication failed for user '%s': %w", s.cfg.SMTP.Username, err)
+			}
+		}
+	}
+
+	if err = client.Mail(fromEmail); err != nil {
+		return fmt.Errorf("SMTP MAIL FROM failed: %w", err)
+	}
+	if err = client.Rcpt(to); err != nil {
+		return fmt.Errorf("SMTP RCPT TO failed: %w", err)
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("SMTP DATA command failed: %w", err)
+	}
+	if _, err = w.Write([]byte(msg.String())); err != nil {
+		return fmt.Errorf("failed to write email body: %w", err)
+	}
+	return w.Close()
 }

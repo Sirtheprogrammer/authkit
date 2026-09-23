@@ -52,10 +52,11 @@ func RunServe(cfg *config.Config) error {
 
 	// Schema & Email Services
 	schemaService := service.NewSchemaService(cfg.Schema)
-	emailService, err := email.NewEmailService(cfg.Email, "AuthKit")
+	baseEmailService, err := email.NewEmailService(cfg.Email, "AuthKit")
 	if err != nil {
 		return fmt.Errorf("email service initialization failed: %w", err)
 	}
+	emailService := email.NewDynamicService(baseEmailService, "AuthKit")
 	log.Printf("[AUTHKIT] Email notification service initialized with provider '%s'.", cfg.Email.Provider)
 
 	// OAuth Providers
@@ -92,15 +93,18 @@ func RunServe(cfg *config.Config) error {
 
 	// HTTP Router
 	router := api.NewRouter(api.RouterParams{
-		Config:       cfg,
-		Database:     database,
-		TokenManager: tm,
-		AuthService:  authService,
-		UserService:  userService,
-		OAuthService: oauthService,
-		OAuthManager: oauthManager,
-		MCPHandler:   mcpHandler,
-		WebStaticFS:  staticFS,
+		Config:        cfg,
+		Database:      database,
+		TokenManager:  tm,
+		AuthService:   authService,
+		UserService:   userService,
+		OAuthService:  oauthService,
+		OAuthManager:  oauthManager,
+		EmailService:  emailService,
+		SchemaService: schemaService,
+		MCPHandler:    mcpHandler,
+		WebStaticFS:   staticFS,
+		ConfigPath:    "authkit.yaml",
 	})
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

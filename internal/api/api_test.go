@@ -12,6 +12,7 @@ import (
 
 	"authkit/internal/config"
 	"authkit/internal/db/sqlite"
+	"authkit/internal/domain"
 	"authkit/internal/email"
 	"authkit/internal/jwt"
 	"authkit/internal/mcp"
@@ -19,7 +20,7 @@ import (
 	"authkit/internal/service"
 )
 
-func setupTestServer(t *testing.T) (http.Handler, func()) {
+func setupTestServer(t *testing.T) (http.Handler, *jwt.TokenManager, func()) {
 	tmpDB := "./test_api.db"
 	database := sqlite.New(tmpDB)
 	ctx := context.Background()
@@ -48,23 +49,26 @@ func setupTestServer(t *testing.T) (http.Handler, func()) {
 
 	schemaService := service.NewSchemaService(cfg.Schema)
 	mockEmail := email.NewMockService(cfg.Email, "AuthKit")
+	dynamicEmail := email.NewDynamicService(mockEmail, "AuthKit")
 	oauthManager := oauth.NewManager()
 
-	authService := service.NewAuthService(cfg, database, tm, schemaService, mockEmail)
+	authService := service.NewAuthService(cfg, database, tm, schemaService, dynamicEmail)
 	userService := service.NewUserService(database, schemaService)
 	oauthService := service.NewOAuthService(cfg, database, tm, oauthManager)
 	mcpHandler := mcp.NewHandler(userService, authService, tm, database, cfg)
 
 	router := NewRouter(RouterParams{
-		Config:       cfg,
-		Database:     database,
-		TokenManager: tm,
-		AuthService:  authService,
-		UserService:  userService,
-		OAuthService: oauthService,
-		OAuthManager: oauthManager,
-		MCPHandler:   mcpHandler,
-		WebStaticFS:  nil,
+		Config:        cfg,
+		Database:      database,
+		TokenManager:  tm,
+		AuthService:   authService,
+		UserService:   userService,
+		OAuthService:  oauthService,
+		OAuthManager:  oauthManager,
+		EmailService:  dynamicEmail,
+		SchemaService: schemaService,
+		MCPHandler:    mcpHandler,
+		WebStaticFS:   nil,
 	})
 
 	cleanup := func() {
@@ -72,11 +76,11 @@ func setupTestServer(t *testing.T) (http.Handler, func()) {
 		os.Remove(tmpDB)
 	}
 
-	return router, cleanup
+	return router, tm, cleanup
 }
 
 func TestAuthFlowE2E(t *testing.T) {
-	router, cleanup := setupTestServer(t)
+	router, _, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	// 1. Test Health Check
@@ -206,3 +210,99 @@ func TestAuthFlowE2E(t *testing.T) {
 		t.Fatalf("MCP tools/list failed: %d - %s", rrMCPList.Code, rrMCPList.Body.String())
 	}
 }
+
+func TestAdminConfigEndpoints(t *testing.T) {
+	router, tm, cleanup := setupTestServer(t)
+	defer cleanup()
+	defer os.Remove("authkit.yaml")
+
+	// 1. Signup test user
+	signupPayload := map[string]interface{}{
+		"email":    "superadmin@authkit.local",
+		"password": "Password123!",
+	}
+	body, _ := json.Marshal(signupPayload)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/signup", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	var signupResp map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &signupResp)
+	token := signupResp["access_token"].(string)
+
+	// Create a superadmin token using server's token manager
+	adminUser := &domain.User{
+		ID:            "admin-id",
+		Email:         "admin@authkit.local",
+		Role:          domain.RoleSuperAdmin,
+		Status:        domain.StatusActive,
+		EmailVerified: true,
+	}
+	adminToken, _, _ := tm.GenerateAccessToken(adminUser, "test-session")
+
+	// 2. Test GET /api/v1/admin/config
+	reqGet := httptest.NewRequest(http.MethodGet, "/api/v1/admin/config", nil)
+	reqGet.Header.Set("Authorization", "Bearer "+adminToken)
+	rrGet := httptest.NewRecorder()
+	router.ServeHTTP(rrGet, reqGet)
+
+	if rrGet.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/config failed: %d - %s", rrGet.Code, rrGet.Body.String())
+	}
+
+	// 3. Test PUT /api/v1/admin/config (Configure GitHub OAuth and Remote SMTP)
+	ghEnabled := true
+	ghClientID := "gh_test_client_id_123"
+	ghSecret := "gh_test_secret_456"
+	smtpHost := "smtp.mailgun.org"
+	smtpPort := 587
+	smtpUser := "postmaster@mailgun.org"
+	smtpPass := "supersecret"
+
+	updatePayload := map[string]interface{}{
+		"oauth": map[string]interface{}{
+			"github": map[string]interface{}{
+				"enabled":       &ghEnabled,
+				"client_id":     &ghClientID,
+				"client_secret": &ghSecret,
+			},
+		},
+		"email": map[string]interface{}{
+			"provider": "mock",
+			"smtp": map[string]interface{}{
+				"host":     &smtpHost,
+				"port":     &smtpPort,
+				"username": &smtpUser,
+				"password": &smtpPass,
+			},
+		},
+	}
+	updBody, _ := json.Marshal(updatePayload)
+	reqPut := httptest.NewRequest(http.MethodPut, "/api/v1/admin/config", bytes.NewBuffer(updBody))
+	reqPut.Header.Set("Authorization", "Bearer "+adminToken)
+	reqPut.Header.Set("Content-Type", "application/json")
+	rrPut := httptest.NewRecorder()
+	router.ServeHTTP(rrPut, reqPut)
+
+	if rrPut.Code != http.StatusOK {
+		t.Fatalf("PUT /api/v1/admin/config failed: %d - %s", rrPut.Code, rrPut.Body.String())
+	}
+
+	// 4. Test POST /api/v1/admin/config/test-email
+	testEmailPayload := map[string]interface{}{
+		"to_email": "tester@example.com",
+	}
+	emailBody, _ := json.Marshal(testEmailPayload)
+	reqEmail := httptest.NewRequest(http.MethodPost, "/api/v1/admin/config/test-email", bytes.NewBuffer(emailBody))
+	reqEmail.Header.Set("Authorization", "Bearer "+adminToken)
+	reqEmail.Header.Set("Content-Type", "application/json")
+	rrEmail := httptest.NewRecorder()
+	router.ServeHTTP(rrEmail, reqEmail)
+
+	if rrEmail.Code != http.StatusOK {
+		t.Fatalf("POST /api/v1/admin/config/test-email failed: %d - %s", rrEmail.Code, rrEmail.Body.String())
+	}
+	_ = token
+}
+

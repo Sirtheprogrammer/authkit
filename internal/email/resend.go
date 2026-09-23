@@ -91,6 +91,13 @@ func (r *ResendEmailService) SendWelcomeEmail(ctx context.Context, toEmail, user
 	return r.send(ctx, toEmail, subject, html, text)
 }
 
+func (r *ResendEmailService) SendTestEmail(ctx context.Context, toEmail string) error {
+	subject := fmt.Sprintf("[%s] Test Email - Resend API Operational", r.appName)
+	html := fmt.Sprintf("<div style='background:#09090b;color:#fff;padding:32px;font-family:sans-serif;'><h2>Resend Integration Verified</h2><p>Your Resend API configuration in %s is operational.</p></div>", r.appName)
+	text := fmt.Sprintf("Resend Integration Verified\n\nYour Resend API configuration in %s is operational.\n", r.appName)
+	return r.send(ctx, toEmail, subject, html, text)
+}
+
 func (r *ResendEmailService) send(ctx context.Context, to, subject, htmlBody, textBody string) error {
 	fromEmail := r.cfg.FromEmail
 	if fromEmail == "" {

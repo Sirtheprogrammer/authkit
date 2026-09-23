@@ -19,6 +19,7 @@
           </svg>
         </div>
         <a href="/" class="logo-text">AuthKit</a>
+        <span class="version-tag">v1.0.0</span>
         <span style="font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);">/ admin</span>
       </div>
 
@@ -27,6 +28,7 @@
         <a href="/" class="nav-link">Home</a>
         <a href="/docs.html" class="nav-link">Documentation</a>
         <a href="/admin.html" class="nav-link active">Admin Console</a>
+        <a href="/.well-known/jwks.json" target="_blank" class="nav-link">JWKS</a>
         <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="nav-btn">GitHub</a>
       </nav>
 
@@ -54,75 +56,359 @@
     <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="mobile-link">GitHub</a>
   </div>
 
-  <div style="max-width: 1200px; margin: 40px auto; padding: 0 24px; flex: 1; width: 100%;">
-    <!-- Top Bar -->
-    <div class="admin-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
-      <div>
-        <h1 style="font-size: 28px; font-weight: 700; color: #ffffff;">User Management</h1>
-        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Inspect active users, manage roles, and review dynamic schema attributes.</p>
-      </div>
-
-      <div class="admin-header-actions" style="display: flex; gap: 12px;">
-        <button id="btn-refresh-users" class="btn-secondary">Refresh</button>
-        <button id="btn-open-create-modal" class="btn-primary">+ Provision User</button>
-      </div>
-    </div>
-
+  <div style="max-width: 1200px; margin: 32px auto; padding: 0 20px; flex: 1; width: 100%;">
     <!-- Admin JWT Token Input -->
     <div class="cmd-box" style="max-width: 100%; margin-bottom: 24px; background: var(--bg-card);">
       <div class="admin-token-row" style="display: flex; align-items: center; gap: 12px; width: 100%;">
         <span style="font-size: 13px; color: var(--text-secondary); white-space: nowrap;">Admin JWT:</span>
         <input type="text" id="admin-jwt-token" class="form-input" placeholder="Bearer access token with admin or superadmin role" style="margin: 0;">
-        <button id="btn-apply-token" class="btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Apply</button>
+        <button id="btn-apply-token" class="btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Apply Token</button>
       </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
-      <div class="feature-card" style="padding: 20px;">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Users</div>
-        <div id="stat-total-users" style="font-size: 32px; font-weight: 800; color: #ffffff; margin-top: 8px;">--</div>
-      </div>
-      <div class="feature-card" style="padding: 20px;">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Storage Engine</div>
-        <div id="stat-storage-engine" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">SQLITE</div>
-      </div>
-      <div class="feature-card" style="padding: 20px;">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Token Algorithm</div>
-        <div id="stat-jwt-algo" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">RS256 (JWKS)</div>
-      </div>
+    <!-- View Switcher Tabs -->
+    <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; overflow-x: auto;">
+      <button id="nav-tab-users" class="tab-btn active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>User Directory</span>
+      </button>
+
+      <button id="nav-tab-config" class="tab-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Settings & Integrations</span>
+      </button>
     </div>
 
-    <!-- User Table Card -->
-    <div class="playground-container">
-      <div class="playground-header">
-        <input type="text" id="admin-search-input" class="form-input" placeholder="Search by email or custom field..." style="max-width: 340px; margin: 0;">
-        <div style="font-size: 13px; color: var(--text-secondary);">
-          Showing: <span id="user-count-display">0</span> users
+    <!-- SECTION 1: USERS DIRECTORY VIEW -->
+    <div id="section-users-view">
+      <div class="admin-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 style="font-size: 24px; font-weight: 700; color: #ffffff;">User Directory</h1>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Inspect active users, manage roles, and review dynamic schema attributes.</p>
+        </div>
+
+        <div class="admin-header-actions" style="display: flex; gap: 12px;">
+          <button id="btn-refresh-users" class="btn-secondary">Refresh</button>
+          <button id="btn-open-create-modal" class="btn-primary">+ Provision User</button>
         </div>
       </div>
 
-      <div style="overflow-x: auto;">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Verified</th>
-              <th>Dynamic Metadata</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="user-table-body">
-            <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 48px 0;">
-                Provide an Admin JWT token above and click Apply to load user records.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Stats Bar -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
+        <div class="feature-card" style="padding: 20px;">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Users</div>
+          <div id="stat-total-users" style="font-size: 32px; font-weight: 800; color: #ffffff; margin-top: 8px;">--</div>
+        </div>
+        <div class="feature-card" style="padding: 20px;">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Storage Engine</div>
+          <div id="stat-storage-engine" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">SQLITE</div>
+        </div>
+        <div class="feature-card" style="padding: 20px;">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Token Algorithm</div>
+          <div id="stat-jwt-algo" style="font-size: 24px; font-weight: 700; color: #ffffff; margin-top: 14px;">RS256 (JWKS)</div>
+        </div>
+      </div>
+
+      <!-- User Table Card -->
+      <div class="playground-container">
+        <div class="playground-header">
+          <input type="text" id="admin-search-input" class="form-input" placeholder="Search by email or custom field..." style="max-width: 340px; margin: 0;">
+          <div style="font-size: 13px; color: var(--text-secondary);">
+            Showing: <span id="user-count-display">0</span> users
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Verified</th>
+                <th>Dynamic Metadata</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-table-body">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 48px 0;">
+                  Provide an Admin JWT token above and click Apply Token to load records.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: SETTINGS & INTEGRATIONS VIEW -->
+    <div id="section-config-view" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 style="font-size: 24px; font-weight: 700; color: #ffffff;">System & Integrations Configuration</h1>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Customize OAuth providers, configure remote SMTP, modify schemas, and hot-reload in real-time.</p>
+        </div>
+
+        <div>
+          <button id="btn-save-config" class="btn-primary" style="padding: 10px 24px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span>Save & Hot-Reload Settings</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="config-alert" style="display: none;" class="status-alert"></div>
+
+      <div class="config-grid">
+        <!-- Card 1: GitHub OAuth -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+              <span>GitHub OAuth</span>
+            </div>
+            <label class="switch-label">
+              <input type="checkbox" id="cfg-github-enabled">
+              <span>Enabled</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Client ID</label>
+            <input type="text" id="cfg-github-client-id" class="form-input" placeholder="e.g. Ov23li...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Client Secret</label>
+            <input type="password" id="cfg-github-client-secret" class="form-input" placeholder="•••••••• (Leave blank to keep current)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Redirect URL</label>
+            <input type="text" id="cfg-github-redirect-url" class="form-input" placeholder="http://localhost:8080/api/v1/auth/oauth/github/callback">
+          </div>
+        </div>
+
+        <!-- Card 2: Google Cloud OAuth -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v8M8 12h8"></path>
+              </svg>
+              <span>Google Cloud OAuth</span>
+            </div>
+            <label class="switch-label">
+              <input type="checkbox" id="cfg-google-enabled">
+              <span>Enabled</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Client ID</label>
+            <input type="text" id="cfg-google-client-id" class="form-input" placeholder="xxx.apps.googleusercontent.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Client Secret</label>
+            <input type="password" id="cfg-google-client-secret" class="form-input" placeholder="•••••••• (Leave blank to keep current)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Redirect URL</label>
+            <input type="text" id="cfg-google-redirect-url" class="form-input" placeholder="http://localhost:8080/api/v1/auth/oauth/google/callback">
+          </div>
+        </div>
+
+        <!-- Card 3: Firebase Auth Project -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span>Firebase Auth Project</span>
+            </div>
+            <label class="switch-label">
+              <input type="checkbox" id="cfg-firebase-enabled">
+              <span>Enabled</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Firebase Project ID</label>
+            <input type="text" id="cfg-firebase-project-id" class="form-input" placeholder="e.g. my-firebase-app">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Service Account JSON (Optional)</label>
+            <textarea id="cfg-firebase-service-account" class="form-textarea" placeholder="Paste service account JSON if using admin validation..."></textarea>
+          </div>
+        </div>
+
+        <!-- Card 4: Email & Remote SMTP Delivery -->
+        <div class="config-card" style="grid-column: 1 / -1;">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <span>Email & Remote SMTP Subsystem</span>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <span style="font-size: 13px; color: var(--text-secondary);">Active Provider:</span>
+              <select id="cfg-email-provider" class="form-input" style="width: auto; padding: 4px 12px;">
+                <option value="smtp">Remote SMTP (Gmail, SendGrid, SES, Mailgun)</option>
+                <option value="resend">Resend SDK</option>
+                <option value="mock">Local Mock (Console Output)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Sender Email (From)</label>
+              <input type="email" id="cfg-from-email" class="form-input" placeholder="auth@yourdomain.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sender Name</label>
+              <input type="text" id="cfg-from-name" class="form-input" placeholder="AuthKit">
+            </div>
+          </div>
+
+          <!-- Remote SMTP Panel -->
+          <div id="panel-smtp-settings" style="margin-top: 12px; padding: 18px; background: #000000; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; letter-spacing: 0.5px;">
+              Remote SMTP Connection Credentials
+            </div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label">Remote SMTP Host</label>
+                <input type="text" id="cfg-smtp-host" class="form-input" placeholder="smtp.gmail.com / smtp.sendgrid.net / smtp.mailgun.org">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Port</label>
+                <input type="number" id="cfg-smtp-port" class="form-input" placeholder="587 or 465">
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label">SMTP Username</label>
+                <input type="text" id="cfg-smtp-username" class="form-input" placeholder="apikey / username@domain.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">SMTP Password</label>
+                <input type="password" id="cfg-smtp-password" class="form-input" placeholder="•••••••• (Leave blank to keep current)">
+              </div>
+            </div>
+            <div style="margin-top: 6px;">
+              <label class="switch-label">
+                <input type="checkbox" id="cfg-smtp-secure">
+                <span>Direct SSL/TLS mode (Enable for Port 465; Uncheck for STARTTLS Port 587/25)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Resend Panel -->
+          <div id="panel-resend-settings" style="display: none; margin-top: 12px; padding: 18px; background: #000000; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+            <div class="form-group">
+              <label class="form-label">Resend API Key</label>
+              <input type="password" id="cfg-resend-api-key" class="form-input" placeholder="re_123456789••••••• (Leave blank to keep current)">
+            </div>
+          </div>
+
+          <!-- Interactive Send Test Email Bar -->
+          <div style="margin-top: 20px; padding: 16px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+            <div style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Verify Remote SMTP / Email Delivery</div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <input type="email" id="test-email-recipient" class="form-input" placeholder="Recipient email address to test (e.g. you@domain.com)" style="flex: 1; min-width: 240px; margin: 0;">
+              <button id="btn-send-test-email" class="btn-secondary" style="white-space: nowrap;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Send Test Email</span>
+              </button>
+            </div>
+            <div id="test-email-status" style="margin-top: 10px; font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Card 5: Dynamic Custom Schema Builder -->
+        <div class="config-card" style="grid-column: 1 / -1;">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              <span>Dynamic Custom Schema Attributes</span>
+            </div>
+
+            <div style="display: flex; gap: 16px; align-items: center;">
+              <label class="switch-label">
+                <input type="checkbox" id="cfg-schema-strict">
+                <span>Strict Mode (Disallow Undeclared Fields)</span>
+              </label>
+              <button type="button" id="btn-add-schema-field" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">+ Add Field</button>
+            </div>
+          </div>
+
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+            Configure dynamic fields validated automatically on user signup and profile updates.
+          </p>
+
+          <div id="schema-fields-container"></div>
+        </div>
+
+        <!-- Card 6: JWT & System Token Security -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <div class="config-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>JWT & Security Settings</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Signing Algorithm</label>
+            <select id="cfg-jwt-algo" class="form-input">
+              <option value="RS256">RS256 (Asymmetric RSA • JWKS RFC 7517)</option>
+              <option value="HS256">HS256 (HMAC SHA-256)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Access Token Expiry</label>
+            <input type="text" id="cfg-jwt-access-expiry" class="form-input" placeholder="e.g. 15m, 1h">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Refresh Token Expiry</label>
+            <input type="text" id="cfg-jwt-refresh-expiry" class="form-input" placeholder="e.g. 168h (7 days)">
+          </div>
+          <div class="form-group">
+            <label class="switch-label">
+              <input type="checkbox" id="cfg-require-verification">
+              <span>Require Email Verification before login</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -160,20 +446,62 @@
     </div>
   </div>
 
+  <footer class="footer">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <strong>AuthKit</strong> v1.0.0 &bull; Released under the MIT Open Source License.
+      </div>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <a href="/">Home</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/.well-known/jwks.json">JWKS</a>
+        <a href="/health">Health</a>
+        <a href="https://github.com/sirtheprogrammer/authkit">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
   <script>
     let adminToken = localStorage.getItem('authkit_admin_token') || '';
     if (adminToken) {
       document.getElementById('admin-jwt-token').value = adminToken;
     }
 
+    // View Navigation Tabs
+    const tabUsers = document.getElementById('nav-tab-users');
+    const tabConfig = document.getElementById('nav-tab-config');
+    const secUsers = document.getElementById('section-users-view');
+    const secConfig = document.getElementById('section-config-view');
+
+    tabUsers.addEventListener('click', () => {
+      tabUsers.classList.add('active');
+      tabConfig.classList.remove('active');
+      secUsers.style.display = 'block';
+      secConfig.style.display = 'none';
+    });
+
+    tabConfig.addEventListener('click', () => {
+      tabConfig.classList.add('active');
+      tabUsers.classList.remove('active');
+      secConfig.style.display = 'block';
+      secUsers.style.display = 'none';
+      fetchConfig();
+    });
+
     document.getElementById('btn-apply-token').addEventListener('click', () => {
       adminToken = document.getElementById('admin-jwt-token').value.trim();
       localStorage.setItem('authkit_admin_token', adminToken);
       fetchUsers();
+      if (secConfig.style.display !== 'none') {
+        fetchConfig();
+      }
     });
 
     document.getElementById('btn-refresh-users').addEventListener('click', fetchUsers);
 
+    // ==========================================
+    // USER DIRECTORY LOGIC
+    // ==========================================
     async function fetchUsers() {
       const search = document.getElementById('admin-search-input').value;
       const tbody = document.getElementById('user-table-body');
@@ -265,7 +593,300 @@
       }
     });
 
-    if (adminToken) fetchUsers();
+    // ==========================================
+    // CONFIGURATION & INTEGRATIONS LOGIC
+    // ==========================================
+    let currentConfig = null;
+
+    // Toggle email provider subpanels
+    document.getElementById('cfg-email-provider').addEventListener('change', (e) => {
+      const p = e.target.value;
+      document.getElementById('panel-smtp-settings').style.display = p === 'smtp' ? 'block' : 'none';
+      document.getElementById('panel-resend-settings').style.display = p === 'resend' ? 'block' : 'none';
+    });
+
+    async function fetchConfig() {
+      const alertBox = document.getElementById('config-alert');
+      alertBox.style.display = 'none';
+
+      try {
+        const headers = {};
+        if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+        const res = await fetch('/api/v1/admin/config', { headers });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAlert(data.error || 'Please provide a valid Admin JWT token above to view and edit system configurations.', 'error');
+          return;
+        }
+
+        currentConfig = data;
+        populateConfigUI(data);
+      } catch (err) {
+        showAlert('Network error fetching configuration: ' + err.message, 'error');
+      }
+    }
+
+    function populateConfigUI(c) {
+      // GitHub
+      document.getElementById('cfg-github-enabled').checked = !!c.oauth?.github?.enabled;
+      document.getElementById('cfg-github-client-id').value = c.oauth?.github?.client_id || '';
+      document.getElementById('cfg-github-client-secret').value = '';
+      document.getElementById('cfg-github-client-secret').placeholder = c.oauth?.github?.has_secret ? '•••••••• (Stored securely)' : 'Enter Client Secret';
+      document.getElementById('cfg-github-redirect-url').value = c.oauth?.github?.redirect_url || '';
+
+      // Google
+      document.getElementById('cfg-google-enabled').checked = !!c.oauth?.google?.enabled;
+      document.getElementById('cfg-google-client-id').value = c.oauth?.google?.client_id || '';
+      document.getElementById('cfg-google-client-secret').value = '';
+      document.getElementById('cfg-google-client-secret').placeholder = c.oauth?.google?.has_secret ? '•••••••• (Stored securely)' : 'Enter Client Secret';
+      document.getElementById('cfg-google-redirect-url').value = c.oauth?.google?.redirect_url || '';
+
+      // Firebase
+      document.getElementById('cfg-firebase-enabled').checked = !!c.oauth?.firebase?.enabled;
+      document.getElementById('cfg-firebase-project-id').value = c.oauth?.firebase?.project_id || '';
+
+      // Email
+      const provider = c.email?.provider || 'smtp';
+      document.getElementById('cfg-email-provider').value = provider;
+      document.getElementById('panel-smtp-settings').style.display = provider === 'smtp' ? 'block' : 'none';
+      document.getElementById('panel-resend-settings').style.display = provider === 'resend' ? 'block' : 'none';
+
+      document.getElementById('cfg-from-email').value = c.email?.from_email || '';
+      document.getElementById('cfg-from-name').value = c.email?.from_name || '';
+
+      document.getElementById('cfg-smtp-host').value = c.email?.smtp?.host || '';
+      document.getElementById('cfg-smtp-port').value = c.email?.smtp?.port || 587;
+      document.getElementById('cfg-smtp-username').value = c.email?.smtp?.username || '';
+      document.getElementById('cfg-smtp-password').value = '';
+      document.getElementById('cfg-smtp-password').placeholder = c.email?.smtp?.has_password ? '•••••••• (Stored securely)' : 'Enter SMTP Password';
+      document.getElementById('cfg-smtp-secure').checked = !!c.email?.smtp?.secure;
+
+      // Resend
+      document.getElementById('cfg-resend-api-key').value = '';
+      document.getElementById('cfg-resend-api-key').placeholder = c.email?.resend?.has_api_key ? '•••••••• (Stored securely)' : 're_...';
+
+      // Schema
+      document.getElementById('cfg-schema-strict').checked = !!c.schema?.strict;
+      renderSchemaFields(c.schema?.fields || []);
+
+      // JWT
+      document.getElementById('cfg-jwt-algo').value = c.jwt?.algorithm || 'RS256';
+      document.getElementById('cfg-jwt-access-expiry').value = c.jwt?.access_expiry || '15m';
+      document.getElementById('cfg-jwt-refresh-expiry').value = c.jwt?.refresh_expiry || '168h';
+      document.getElementById('cfg-require-verification').checked = !!c.jwt?.require_email_verification;
+    }
+
+    function renderSchemaFields(fields) {
+      const container = document.getElementById('schema-fields-container');
+      container.innerHTML = '';
+
+      if (fields.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px 0;">No custom schema fields configured. Click "+ Add Field" to define one.</div>';
+        return;
+      }
+
+      fields.forEach((f, idx) => {
+        const row = document.createElement('div');
+        row.className = 'schema-field-row';
+        row.innerHTML = `
+          <input type="text" class="form-input field-name" placeholder="Field name (e.g. company)" value="${f.name || ''}" style="margin: 0;">
+          <select class="form-input field-type" style="margin: 0; background: #000;">
+            <option value="string" ${f.type === 'string' ? 'selected' : ''}>String</option>
+            <option value="number" ${f.type === 'number' ? 'selected' : ''}>Number</option>
+            <option value="boolean" ${f.type === 'boolean' ? 'selected' : ''}>Boolean</option>
+            <option value="array" ${f.type === 'array' ? 'selected' : ''}>Array</option>
+            <option value="object" ${f.type === 'object' ? 'selected' : ''}>Object</option>
+          </select>
+          <label class="switch-label" style="justify-content: center;">
+            <input type="checkbox" class="field-required" ${f.required ? 'checked' : ''}>
+            <span>Req.</span>
+          </label>
+          <input type="text" class="form-input field-allowed" placeholder="Allowed vals: pro, free" value="${(f.allowed_values || []).join(', ')}" style="margin: 0;">
+          <button type="button" class="btn-icon-danger" onclick="removeSchemaField(${idx})" title="Remove field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    document.getElementById('btn-add-schema-field').addEventListener('click', () => {
+      const currentFields = collectSchemaFieldsFromUI();
+      currentFields.push({ name: '', type: 'string', required: false, allowed_values: [] });
+      renderSchemaFields(currentFields);
+    });
+
+    window.removeSchemaField = function(idx) {
+      const currentFields = collectSchemaFieldsFromUI();
+      currentFields.splice(idx, 1);
+      renderSchemaFields(currentFields);
+    };
+
+    function collectSchemaFieldsFromUI() {
+      const rows = document.querySelectorAll('#schema-fields-container .schema-field-row');
+      const fields = [];
+      rows.forEach(r => {
+        const name = r.querySelector('.field-name').value.trim();
+        const type = r.querySelector('.field-type').value;
+        const required = r.querySelector('.field-required').checked;
+        const allowedRaw = r.querySelector('.field-allowed').value;
+        const allowed = allowedRaw ? allowedRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        if (name) {
+          fields.push({ name, type, required, allowed_values: allowed });
+        }
+      });
+      return fields;
+    }
+
+    // Save and hot-reload settings
+    document.getElementById('btn-save-config').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-save-config');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      const payload = {
+        oauth: {
+          github: {
+            enabled: document.getElementById('cfg-github-enabled').checked,
+            client_id: document.getElementById('cfg-github-client-id').value.trim(),
+            client_secret: document.getElementById('cfg-github-client-secret').value.trim(),
+            redirect_url: document.getElementById('cfg-github-redirect-url').value.trim(),
+          },
+          google: {
+            enabled: document.getElementById('cfg-google-enabled').checked,
+            client_id: document.getElementById('cfg-google-client-id').value.trim(),
+            client_secret: document.getElementById('cfg-google-client-secret').value.trim(),
+            redirect_url: document.getElementById('cfg-google-redirect-url').value.trim(),
+          },
+          firebase: {
+            enabled: document.getElementById('cfg-firebase-enabled').checked,
+            project_id: document.getElementById('cfg-firebase-project-id').value.trim(),
+            service_account_json: document.getElementById('cfg-firebase-service-account').value.trim(),
+          }
+        },
+        email: {
+          provider: document.getElementById('cfg-email-provider').value,
+          from_email: document.getElementById('cfg-from-email').value.trim(),
+          from_name: document.getElementById('cfg-from-name').value.trim(),
+          smtp: {
+            host: document.getElementById('cfg-smtp-host').value.trim(),
+            port: parseInt(document.getElementById('cfg-smtp-port').value, 10) || 587,
+            username: document.getElementById('cfg-smtp-username').value.trim(),
+            password: document.getElementById('cfg-smtp-password').value,
+            secure: document.getElementById('cfg-smtp-secure').checked,
+          },
+          resend: {
+            api_key: document.getElementById('cfg-resend-api-key').value.trim(),
+          }
+        },
+        schema: {
+          strict: document.getElementById('cfg-schema-strict').checked,
+          fields: collectSchemaFieldsFromUI(),
+        },
+        jwt: {
+          algorithm: document.getElementById('cfg-jwt-algo').value,
+          access_expiry: document.getElementById('cfg-jwt-access-expiry').value.trim(),
+          refresh_expiry: document.getElementById('cfg-jwt-refresh-expiry').value.trim(),
+          require_email_verification: document.getElementById('cfg-require-verification').checked,
+        }
+      };
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+
+        const res = await fetch('/api/v1/admin/config', {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert(data.message || 'Settings saved and hot-reloaded successfully!', 'success');
+          fetchConfig();
+        } else {
+          showAlert(data.error || 'Failed to save configuration.', 'error');
+        }
+      } catch (err) {
+        showAlert('Network error: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> <span>Save & Hot-Reload Settings</span>`;
+      }
+    });
+
+    // Send Test Email handler
+    document.getElementById('btn-send-test-email').addEventListener('click', async () => {
+      const toEmail = document.getElementById('test-email-recipient').value.trim();
+      const statusBox = document.getElementById('test-email-status');
+      if (!toEmail) {
+        alert('Please enter a recipient email address to test.');
+        return;
+      }
+
+      statusBox.style.display = 'block';
+      statusBox.style.color = '#a1a1aa';
+      statusBox.innerText = `Connecting and dispatching test email to ${toEmail}...`;
+
+      const provider = document.getElementById('cfg-email-provider').value;
+      const testPayload = {
+        to_email: toEmail,
+        provider: provider,
+        from_email: document.getElementById('cfg-from-email').value.trim(),
+        from_name: document.getElementById('cfg-from-name').value.trim(),
+      };
+
+      if (provider === 'smtp') {
+        testPayload.smtp = {
+          host: document.getElementById('cfg-smtp-host').value.trim(),
+          port: parseInt(document.getElementById('cfg-smtp-port').value, 10) || 587,
+          username: document.getElementById('cfg-smtp-username').value.trim(),
+          password: document.getElementById('cfg-smtp-password').value,
+          secure: document.getElementById('cfg-smtp-secure').checked,
+        };
+      }
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+
+        const res = await fetch('/api/v1/admin/config/test-email', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(testPayload),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          statusBox.style.color = '#ffffff';
+          statusBox.innerText = `[SUCCESS] ${data.message}`;
+        } else {
+          statusBox.style.color = '#fca5a5';
+          statusBox.innerText = `[FAILED] ${data.error || 'Could not send test email'}`;
+        }
+      } catch (err) {
+        statusBox.style.color = '#fca5a5';
+        statusBox.innerText = `[NETWORK ERROR] ${err.message}`;
+      }
+    });
+
+    function showAlert(msg, type) {
+      const box = document.getElementById('config-alert');
+      box.className = `status-alert ${type}`;
+      box.innerText = msg;
+      box.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    if (adminToken) {
+      fetchUsers();
+    }
   </script>
   <script src="/app.js"></script>
 </body>

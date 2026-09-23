@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"authkit/internal/config"
@@ -14,6 +15,57 @@ type Service interface {
 	SendVerificationEmail(ctx context.Context, toEmail, userName, code, verifyURL string) error
 	SendPasswordResetEmail(ctx context.Context, toEmail, userName, code, resetURL string) error
 	SendWelcomeEmail(ctx context.Context, toEmail, userName string) error
+	SendTestEmail(ctx context.Context, toEmail string) error
+}
+
+// DynamicService wraps an email Service and allows atomically swapping it at runtime
+type DynamicService struct {
+	mu      sync.RWMutex
+	current Service
+	appName string
+}
+
+func NewDynamicService(initial Service, appName string) *DynamicService {
+	return &DynamicService{
+		current: initial,
+		appName: appName,
+	}
+}
+
+func (d *DynamicService) SetService(s Service) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.current = s
+}
+
+func (d *DynamicService) GetService() Service {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.current
+}
+
+func (d *DynamicService) SendVerificationEmail(ctx context.Context, toEmail, userName, code, verifyURL string) error {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.current.SendVerificationEmail(ctx, toEmail, userName, code, verifyURL)
+}
+
+func (d *DynamicService) SendPasswordResetEmail(ctx context.Context, toEmail, userName, code, resetURL string) error {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.current.SendPasswordResetEmail(ctx, toEmail, userName, code, resetURL)
+}
+
+func (d *DynamicService) SendWelcomeEmail(ctx context.Context, toEmail, userName string) error {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.current.SendWelcomeEmail(ctx, toEmail, userName)
+}
+
+func (d *DynamicService) SendTestEmail(ctx context.Context, toEmail string) error {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.current.SendTestEmail(ctx, toEmail)
 }
 
 // NewEmailService instantiates the appropriate email service based on config
@@ -140,6 +192,19 @@ func (m *MockService) SendWelcomeEmail(ctx context.Context, toEmail, userName st
 	}
 	m.Messages = append(m.Messages, msg)
 	log.Printf("[EMAIL MOCK] Welcome email sent to %s", toEmail)
+	return nil
+}
+
+func (m *MockService) SendTestEmail(ctx context.Context, toEmail string) error {
+	msg := SentMessage{
+		To:      toEmail,
+		Subject: fmt.Sprintf("[%s] Test Email - Mock Provider Operational", m.appName),
+		HTML:    fmt.Sprintf("<p>Test email sent to %s via Mock Provider</p>", toEmail),
+		Text:    fmt.Sprintf("Test email sent to %s via Mock Provider", toEmail),
+		SentAt:  time.Now(),
+	}
+	m.Messages = append(m.Messages, msg)
+	log.Printf("[EMAIL MOCK] Test email sent to %s", toEmail)
 	return nil
 }
 

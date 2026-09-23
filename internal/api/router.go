@@ -8,6 +8,7 @@ import (
 	"authkit/internal/config"
 	"authkit/internal/db"
 	"authkit/internal/domain"
+	"authkit/internal/email"
 	"authkit/internal/jwt"
 	"authkit/internal/mcp"
 	"authkit/internal/oauth"
@@ -25,8 +26,11 @@ type RouterParams struct {
 	UserService   *service.UserService
 	OAuthService  *service.OAuthService
 	OAuthManager  *oauth.Manager
+	EmailService  *email.DynamicService
+	SchemaService *service.SchemaService
 	MCPHandler    *mcp.Handler
 	WebStaticFS   fs.FS
+	ConfigPath    string
 }
 
 // NewRouter constructs the complete Chi HTTP router with security middlewares
@@ -63,6 +67,7 @@ func NewRouter(p RouterParams) http.Handler {
 	oauthHandler := NewOAuthHandler(p.Config, p.OAuthService, p.OAuthManager)
 	wellKnownHandler := NewWellKnownHandler(p.Config, p.TokenManager, p.Database)
 	mcpServer := mcp.NewServer(p.MCPHandler)
+	configHandler := NewConfigHandler(p.Config, p.OAuthManager, p.EmailService, p.SchemaService, p.ConfigPath)
 
 	// Well-known & health endpoints (stateless RFC verification)
 	r.Get("/.well-known/jwks.json", wellKnownHandler.JWKS)
@@ -110,6 +115,14 @@ func NewRouter(p RouterParams) http.Handler {
 			users.Get("/{id}", userHandler.GetByID)
 			users.Put("/{id}", userHandler.Update)
 			users.Delete("/{id}", userHandler.Delete)
+		})
+
+		// Administrative System & Integrations Configuration
+		api.Route("/admin/config", func(adminCfg chi.Router) {
+			adminCfg.Use(RequireRole(domain.RoleAdmin, domain.RoleSuperAdmin))
+			adminCfg.Get("/", configHandler.GetConfig)
+			adminCfg.Put("/", configHandler.UpdateConfig)
+			adminCfg.Post("/test-email", configHandler.TestEmail)
 		})
 	})
 
