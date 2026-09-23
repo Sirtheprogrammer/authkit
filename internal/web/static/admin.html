@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Admin Console — AuthKit</title>
   <link rel="stylesheet" href="/app.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
 </head>
 <body>
 
@@ -13,28 +13,56 @@
   <header class="header">
     <div class="header-container">
       <div class="logo-group">
-        <div class="logo-badge">AK</div>
+        <div class="logo-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
         <a href="/" class="logo-text">AuthKit</a>
         <span style="font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);">/ admin</span>
       </div>
+
+      <!-- Desktop Nav -->
       <nav class="nav-links">
         <a href="/" class="nav-link">Home</a>
         <a href="/docs.html" class="nav-link">Documentation</a>
         <a href="/admin.html" class="nav-link active">Admin Console</a>
         <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="nav-btn">GitHub</a>
       </nav>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Navigation">
+        <svg id="hamburger-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg id="close-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
   </header>
 
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/" class="mobile-link">Home</a>
+    <a href="/docs.html" class="mobile-link">Documentation</a>
+    <a href="/admin.html" class="mobile-link">Admin Console</a>
+    <a href="/.well-known/jwks.json" target="_blank" class="mobile-link">JWKS Endpoint</a>
+    <a href="https://github.com/sirtheprogrammer/authkit" target="_blank" class="mobile-link">GitHub</a>
+  </div>
+
   <div style="max-width: 1200px; margin: 40px auto; padding: 0 24px; flex: 1; width: 100%;">
     <!-- Top Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+    <div class="admin-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
       <div>
         <h1 style="font-size: 28px; font-weight: 700; color: #ffffff;">User Management</h1>
         <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Inspect active users, manage roles, and review dynamic schema attributes.</p>
       </div>
 
-      <div style="display: flex; gap: 12px;">
+      <div class="admin-header-actions" style="display: flex; gap: 12px;">
         <button id="btn-refresh-users" class="btn-secondary">Refresh</button>
         <button id="btn-open-create-modal" class="btn-primary">+ Provision User</button>
       </div>
@@ -42,7 +70,7 @@
 
     <!-- Admin JWT Token Input -->
     <div class="cmd-box" style="max-width: 100%; margin-bottom: 24px; background: var(--bg-card);">
-      <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+      <div class="admin-token-row" style="display: flex; align-items: center; gap: 12px; width: 100%;">
         <span style="font-size: 13px; color: var(--text-secondary); white-space: nowrap;">Admin JWT:</span>
         <input type="text" id="admin-jwt-token" class="form-input" placeholder="Bearer access token with admin or superadmin role" style="margin: 0;">
         <button id="btn-apply-token" class="btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Apply</button>
@@ -176,7 +204,7 @@
             <td><strong>${u.email}</strong></td>
             <td><span class="status-badge" style="background: rgba(255,255,255,0.1); color: #fff;">${u.role}</span></td>
             <td><span class="status-badge ${u.status === 'active' ? 'status-active' : 'status-suspended'}">${u.status}</span></td>
-            <td>${u.email_verified ? '✓' : '—'}</td>
+            <td><span class="status-badge ${u.email_verified ? 'status-active' : 'status-suspended'}">${u.email_verified ? 'Verified' : 'Unverified'}</span></td>
             <td><code style="font-size: 11px; color: #a1a1aa;">${JSON.stringify(u.metadata || {})}</code></td>
             <td style="color: var(--text-muted); font-size: 12px;">${new Date(u.created_at).toLocaleDateString()}</td>
             <td>
@@ -239,5 +267,6 @@
 
     if (adminToken) fetchUsers();
   </script>
+  <script src="/app.js"></script>
 </body>
 </html>

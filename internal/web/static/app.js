@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCopyButtons();
   initPlayground();
   initCodeTabs();
+  initMobileNav();
 });
 
 // Live Health & Status Polling
@@ -203,6 +204,32 @@ function initCodeTabs() {
         const targetBlock = container.querySelector(`.snippet-block[data-lang="${lang}"]`);
         if (targetBlock) targetBlock.style.display = 'block';
       });
+    });
+  });
+}
+
+// Mobile navigation drawer toggle
+function initMobileNav() {
+  const toggle = document.getElementById('mobile-toggle');
+  const nav = document.getElementById('mobile-nav');
+  const hamburger = document.getElementById('hamburger-icon');
+  const close = document.getElementById('close-icon');
+
+  if (!toggle || !nav) return;
+
+  const toggleOpen = () => {
+    const isOpen = nav.classList.toggle('open');
+    if (hamburger) hamburger.style.display = isOpen ? 'none' : 'block';
+    if (close) close.style.display = isOpen ? 'block' : 'none';
+  };
+
+  toggle.addEventListener('click', toggleOpen);
+
+  nav.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      if (hamburger) hamburger.style.display = 'block';
+      if (close) close.style.display = 'none';
     });
   });
 }

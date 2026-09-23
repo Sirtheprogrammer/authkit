@@ -122,6 +122,11 @@ func NewRouter(p RouterParams) http.Handler {
 				writeJSONError(w, http.StatusNotFound, "Endpoint not found")
 				return
 			}
+			if req.URL.Path == "/docs" {
+				req.URL.Path = "/docs.html"
+			} else if req.URL.Path == "/admin" {
+				req.URL.Path = "/admin.html"
+			}
 			// Otherwise serve web frontend
 			fileServer.ServeHTTP(w, req)
 		})
