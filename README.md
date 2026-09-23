@@ -1,4 +1,4 @@
-# ⚡ AuthKit
+# AuthKit
 
 > **The open-source, stateless authentication and user management kit ready for any project.**  
 > Built in Go for single-binary portability, ultra-low memory footprint, and instant verification across microservices.
@@ -12,7 +12,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 AuthKit is a complete, self-contained authentication and user management microservice that you can set up on your machine or server with a **single command**.
 
@@ -20,12 +20,12 @@ Unlike traditional auth solutions that require downstream services to query a da
 
 ```mermaid
 flowchart LR
-    Client["Client / Frontend\n(Web, Mobile)"] -->|1. Login / Signup| AuthKit["AuthKit Service\n(Port 8080)"]
-    AuthKit -->|2. Asymmetric Stateless JWT| Client
-    Client -->|3. Bearer Token| Microservice["Downstream Microservices\n(Node, Python, Go)"]
-    Microservice -->|4. Verify via JWKS (Cached)| AuthKitJWKS["AuthKit JWKS Endpoint\n(/.well-known/jwks.json)"]
+    Client["Client / Frontend<br/>Web, Mobile"] -->|"1. Login / Signup"| AuthKit["AuthKit Service<br/>Port 8080"]
+    AuthKit -->|"2. Asymmetric Stateless JWT"| Client
+    Client -->|"3. Bearer Token"| Microservice["Downstream Microservices<br/>Node, Python, Go"]
+    Microservice -->|"4. Verify via Cached JWKS"| AuthKitJWKS["AuthKit JWKS Endpoint<br/>/.well-known/jwks.json"]
 
-    subgraph Storage Engines
+    subgraph StorageEngines ["Storage Engines"]
         AuthKit -.-> SQLite["SQLite (Default)"]
         AuthKit -.-> Postgres["PostgreSQL"]
         AuthKit -.-> MySQL["MySQL"]
@@ -35,31 +35,31 @@ flowchart LR
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- **⚡ 100% Stateless & JWKS Ready:** Issues RS256/HS256 tokens with standard OpenID discovery (`/.well-known/openid-configuration`) and JWKS (`/.well-known/jwks.json`).
-- **💾 Multi-Database Freedom:** Switch seamlessly between **SQLite** (pure Go zero-config default), **PostgreSQL**, **MySQL**, and **MongoDB**. Automatic migrations run on startup.
-- **🧩 Fully Dynamic Custom Schema:** Store any custom metadata (phone numbers, organization, subscription tiers, addresses, preferences) with strict or permissive schema validation.
-- **🔑 Google, Firebase & GitHub OAuth:**
+- **100% Stateless & JWKS Ready:** Issues RS256/HS256 tokens with standard OpenID discovery (`/.well-known/openid-configuration`) and JWKS (`/.well-known/jwks.json`).
+- **Multi-Database Freedom:** Switch seamlessly between **SQLite** (pure Go zero-config default), **PostgreSQL**, **MySQL**, and **MongoDB**. Automatic migrations run on startup.
+- **Fully Dynamic Custom Schema:** Store any custom metadata (phone numbers, organization, subscription tiers, addresses, preferences) with strict or permissive schema validation.
+- **Google, Firebase & GitHub OAuth:**
   - Google Cloud OAuth2 / OpenID Connect
   - GitHub OAuth with private email resolution
   - Direct **Firebase Auth integration**: verifies Firebase client ID tokens and auto-provisions or federates users
-- **✉️ Bring-Your-Own Email & Resend SDK:**
+- **Bring-Your-Own Email & Resend SDK:**
   - Standard SMTP (STARTTLS / TLS)
   - Resend API integration
   - Monochromatic responsive HTML email templates for 6-digit OTP verification and password reset
-- **🤖 Model Context Protocol (MCP) AI Server:**
+- **Model Context Protocol (MCP) AI Server:**
   - Built-in MCP JSON-RPC 2.0 server over **stdio** (`authkit mcp`) and **HTTP** (`POST /mcp`)
   - Enables Claude Desktop, Cursor, and autonomous AI agents to manage users, inspect tokens, and query authentication state
-- **🖥️ Monochromatic Landing Page, Docs & Admin Console:**
+- **Monochromatic Landing Page, Docs & Admin Console:**
   - Embedded directly inside the binary via Go `embed.FS`
   - Zero external CDN or Node.js runtime required
   - Interactive API playground to test signup, login, and token decoding live in the browser
-- **🚀 One-Command Setup:** Interactive CLI wizard (`authkit init`), Docker container, or 1-line curl script.
+- **One-Command Setup:** Interactive CLI wizard (`authkit init`), Docker container, or 1-line curl script.
 
 ---
 
-## ⚡ Quickstart
+## Quickstart
 
 ### 1. One-Line Install Script
 ```bash
@@ -91,7 +91,7 @@ Open **`http://localhost:8080`** in your browser to view the monochromatic landi
 
 ---
 
-## 🗄️ Database Setup
+## Database Setup
 
 AuthKit selects the database driver automatically from `DB_TYPE` or `DATABASE_URL`:
 
@@ -121,7 +121,7 @@ export DATABASE_URL="mongodb://localhost:27017/authkit"
 
 ---
 
-## 🧩 Dynamic Custom Schema
+## Dynamic Custom Schema
 
 Define custom user fields in `authkit.yaml` without writing SQL migrations:
 
@@ -145,7 +145,7 @@ schema:
 
 ---
 
-## 🔑 OAuth & Firebase Configuration
+## OAuth & Firebase Configuration
 
 Set your provider credentials in `.env` or `authkit.yaml`:
 
@@ -166,7 +166,7 @@ FIREBASE_PROJECT_ID="my-firebase-project-id"
 
 ---
 
-## ✉️ Email Notifications (SMTP & Resend)
+## Email Notifications (SMTP & Resend)
 
 ### SMTP
 ```bash
@@ -189,7 +189,7 @@ EMAIL_FROM_NAME="AuthKit"
 
 ---
 
-## 🤖 Model Context Protocol (MCP) Setup
+## Model Context Protocol (MCP) Setup
 
 AuthKit provides native AI integration for AI assistants. To configure Claude Desktop:
 
@@ -221,7 +221,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
 ---
 
-## 🌐 Stateless Verification Code Examples
+## Stateless Verification Code Examples
 
 ### TypeScript / Next.js
 ```typescript
@@ -260,7 +260,7 @@ def verify_token(token: str):
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 ### Auth Endpoints
 - `POST /api/v1/auth/signup` — Create user and receive stateless token
@@ -291,7 +291,7 @@ def verify_token(token: str):
 
 ---
 
-## 🛠️ CLI Commands
+## CLI Commands
 
 ```bash
 authkit serve             # Start HTTP server and embedded web console (default)
@@ -305,6 +305,6 @@ authkit version           # Show version information
 
 ---
 
-## 📄 License
+## License
 
 MIT &copy; 2026 AuthKit Authors. Free for personal and commercial use.

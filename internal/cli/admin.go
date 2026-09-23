@@ -39,7 +39,7 @@ func CreateSuperAdmin(cfg *config.Config, emailStr, password string) error {
 		if err := database.UpdateUser(ctx, existing); err != nil {
 			return err
 		}
-		fmt.Printf("✓ Existing user %s elevated to superadmin successfully.\n", emailStr)
+		fmt.Printf("[OK] Existing user %s elevated to superadmin successfully.\n", emailStr)
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func CreateSuperAdmin(cfg *config.Config, emailStr, password string) error {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	fmt.Printf("✓ Superadmin account created: %s (ID: %s)\n", emailStr, user.ID)
+	fmt.Printf("[OK] Superadmin account created: %s (ID: %s)\n", emailStr, user.ID)
 	return nil
 }
 

@@ -118,7 +118,7 @@ func RunServe(cfg *config.Config) error {
 
 	go func() {
 		log.Printf("=====================================================")
-		log.Printf(" ⚡ AuthKit service listening on http://%s", serverAddr)
+		log.Printf(" [AUTHKIT] Service listening on http://%s", serverAddr)
 		log.Printf(" • Documentation:  %s/docs.html", cfg.Server.BaseURL)
 		log.Printf(" • Admin Console:  %s/admin.html", cfg.Server.BaseURL)
 		log.Printf(" • JWKS Discovery: %s/.well-known/jwks.json", cfg.Server.BaseURL)

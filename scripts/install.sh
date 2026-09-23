@@ -11,7 +11,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 echo -e "${BOLD}=====================================================${NC}"
-echo -e "${BOLD}      ⚡ Installing AuthKit — Stateless Auth Kit     ${NC}"
+echo -e "${BOLD}      Installing AuthKit — Stateless Auth Kit        ${NC}"
 echo -e "${BOLD}=====================================================${NC}"
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -59,7 +59,7 @@ fi
 
 chmod +x "$BIN_DIR/authkit"
 
-echo -e "\n${GREEN}✓ AuthKit installed successfully at ${BIN_DIR}/authkit${NC}\n"
+echo -e "\n${GREEN}[OK] AuthKit installed successfully at ${BIN_DIR}/authkit${NC}\n"
 echo -e "To get started:"
 echo -e "  1. Initialize configuration:  ${BOLD}authkit init${NC}"
 echo -e "  2. Start AuthKit service:     ${BOLD}authkit serve${NC}"

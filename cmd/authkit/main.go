@@ -52,7 +52,7 @@ func main() {
 			log.Fatalf("Migration failed: %v", err)
 		}
 		defer db.Close()
-		log.Println("✓ Migrations completed successfully.")
+		log.Println("[OK] Migrations completed successfully.")
 
 	case "admin":
 		if len(args) < 2 || args[1] != "create" {

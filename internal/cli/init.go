@@ -221,8 +221,8 @@ mcp:
 	}
 
 	fmt.Println()
-	fmt.Println("✓ Generated .env successfully.")
-	fmt.Println("✓ Generated authkit.yaml successfully.")
+	fmt.Println("[OK] Generated .env successfully.")
+	fmt.Println("[OK] Generated authkit.yaml successfully.")
 	fmt.Println()
 	fmt.Println("Setup complete! You can now start AuthKit with:")
 	fmt.Println("   ./authkit serve")
